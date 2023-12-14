@@ -2,7 +2,7 @@
 
 import { useCompletion } from "ai/react";
 import { FormEvent, useState } from "react";
-import { Companion, Message } from "@prisma/client";
+import { Assistant, Message } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
 import { ChatForm } from "@/components/chat-form";
@@ -11,7 +11,7 @@ import { ChatMessages } from "@/components/chat-messages";
 import { ChatMessageProps } from "@/components/chat-message";
 
 interface ChatClientProps {
-  companion: Companion & {
+  assistant: Assistant & {
     messages: Message[];
     _count: {
       messages: number;
@@ -19,15 +19,15 @@ interface ChatClientProps {
   };
 }
 
-export const ChatClient = ({ companion }: ChatClientProps) => {
+export const ChatClient = ({ assistant }: ChatClientProps) => {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageProps[]>(
-    companion.messages
+    assistant.messages
   );
 
   const { input, isLoading, handleInputChange, handleSubmit, setInput } =
     useCompletion({
-      api: `/api/chat/${companion.id}`,
+      api: `/api/chat/${assistant.id}`,
       onFinish(_prompt, completion) {
         const systemMessage: ChatMessageProps = {
           role: "system",
@@ -54,9 +54,9 @@ export const ChatClient = ({ companion }: ChatClientProps) => {
 
   return (
     <div className="flex flex-col h-full p-4 space-y-2">
-      <ChatHeader companion={companion} />
+      <ChatHeader assistant={assistant} />
       <ChatMessages
-        companion={companion}
+        assistant={assistant}
         isLoading={isLoading}
         messages={messages}
       />

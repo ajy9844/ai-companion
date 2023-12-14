@@ -1,4 +1,4 @@
-import { Companions } from "@/components/companions";
+import { Assistants } from "@/components/assistants";
 import { SearchInput } from "@/components/search-input";
 import prismadb from "@/lib/prismadb";
 
@@ -10,7 +10,7 @@ interface RootPageProps {
 }
 
 const RootPage = async ({ searchParams }: RootPageProps) => {
-  const data = await prismadb.companion.findMany({
+  const data = await prismadb.assistant.findMany({
     where: {
       categoryId: searchParams.categoryId,
       name: {
@@ -32,7 +32,7 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
   return (
     <div className="h-full p-4 space-y-2">
       <SearchInput />
-      <Companions data={data} />
+      <Assistants data={data} />
     </div>
   );
 };

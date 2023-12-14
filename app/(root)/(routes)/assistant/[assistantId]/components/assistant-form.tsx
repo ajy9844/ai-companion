@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import * as z from "zod";
-import { Category, Companion } from "@prisma/client";
+import { Category, Assistant } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -47,8 +47,8 @@ Human: It's fascinating to see your vision unfold. Any new projects or innovatio
 Elon: Always! But right now, I'm particularly excited about Neuralink. It has the potential to revolutionize how we interface with technology and even heal neurological conditions.
 `;
 
-interface CompanionFormProps {
-  initialData: Companion | null;
+interface AssistantFormProps {
+  initialData: Assistant | null;
   categories: Category[];
 }
 
@@ -73,10 +73,10 @@ const formSchema = z.object({
   }),
 });
 
-export const CompanionForm = ({
+export const AssistantForm = ({
   initialData,
   categories,
-}: CompanionFormProps) => {
+}: AssistantFormProps) => {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -97,11 +97,11 @@ export const CompanionForm = ({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       if (initialData) {
-        // update companion functionality
-        await axios.patch(`/api/companion/${initialData.id}`, values);
+        // update assistant functionality
+        await axios.patch(`/api/assistant/${initialData.id}`, values);
       } else {
-        // create companion functionality
-        await axios.post("/api/companion", values);
+        // create assistant functionality
+        await axios.post("/api/assistant", values);
       }
 
       toast({
@@ -129,7 +129,7 @@ export const CompanionForm = ({
             <div>
               <h3 className="text-lg font-medium">General Information</h3>
               <p className="text-sm text-muted-foreground">
-                General information about your Companion
+                General information about your Assistant
               </p>
             </div>
             <Separator className="bg-primary/10" />
@@ -164,7 +164,7 @@ export const CompanionForm = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    This is how your AI Companion will be named.
+                    This is how your AI Assistant will be named.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -184,7 +184,7 @@ export const CompanionForm = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    Short description for your AI Companion
+                    Short description for your AI Assistant
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -251,7 +251,7 @@ export const CompanionForm = ({
                   />
                 </FormControl>
                 <FormDescription>
-                  Describe in detail your companion&apos;s backstory and
+                  Describe in detail your assistant&apos;s backstory and
                   relevant details.
                 </FormDescription>
                 <FormMessage />
@@ -275,7 +275,7 @@ export const CompanionForm = ({
                 </FormControl>
                 <FormDescription>
                   Write couple of examples of a human chatting with your AI
-                  companion, write expected answers.
+                  assistant, write expected answers.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -283,7 +283,7 @@ export const CompanionForm = ({
           />
           <div className="w-full flex justify-center">
             <Button size="lg" disabled={isLoading}>
-              {initialData ? "Edit your companion" : "Mint your companion"}
+              {initialData ? "Edit your assistant" : "Mint your assistant"}
               <Wand2 className="w-4 h-4 ml-2" />
             </Button>
           </div>

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     // TODO(jiyoung): check for subscription.
 
-    const companion = await prismadb.companion.create({
+    const assistant = await prismadb.assistant.create({
       data: {
         categoryId,
         userId: user.id,
@@ -39,9 +39,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(companion);
+    return NextResponse.json(assistant);
   } catch (error) {
-    console.log("[COMPANION_POST]", error);
+    console.log("[ASSISTANT_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
