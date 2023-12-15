@@ -1,12 +1,15 @@
-import { StreamingTextResponse, LangChainStream } from "ai";
+import OpenAI from "openai";
+import { OpenAIStream, StreamingTextResponse } from "ai";
 import { auth, currentUser } from "@clerk/nextjs";
-import { Replicate } from "langchain/llms/replicate";
-import { CallbackManager } from "langchain/callbacks";
 import { NextResponse } from "next/server";
 
 import { MemoryManager } from "@/lib/memory";
 import { rateLimit } from "@/lib/rate-limit";
 import prismadb from "@/lib/prismadb";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(
   request: Request,
@@ -80,42 +83,41 @@ export async function POST(
     if (!!similarDocs && similarDocs.length !== 0) {
       relevantHistory = similarDocs.map((doc) => doc.pageContent).join("\n");
     }
-    const { handlers } = LangChainStream();
-    // Call Replicate for inference
-    const model = new Replicate({
-      model:
-        "a16z-infra/llama-2-13b-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5",
-      input: {
-        max_length: 2048,
-      },
-      apiKey: process.env.REPLICATE_API_TOKEN,
-      callbackManager: CallbackManager.fromHandlers(handlers),
+
+    const resp = await openai.completions.create({
+      model: "gpt-3.5-turbo-instruct",
+      max_tokens: 2000,
+      stream: true,
+      prompt: `
+      ONLY generate plain sentences without prefix of who is speaking. DO NOT use ${assistant.name}: prefix. 
+
+      ${assistant.instructions}
+
+      Below are relevant details about ${assistant.name}'s past and the conversation you are in.
+      ${relevantHistory}
+
+
+      ${recentChatHistory}\n${assistant.name}:`,
     });
 
-    // Turn verbose on for debugging
-    model.verbose = true;
+    const stream = OpenAIStream(resp);
 
-    const resp = String(
-      await model
-        .call(
-          `
-        ONLY generate plain sentences without prefix of who is speaking. DO NOT use ${assistant.name}: prefix. 
+    const toString = async (stream: ReadableStream) => {
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      const chunks: string[] = [];
 
-        ${assistant.instructions}
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        chunks.push(chunk);
+      }
 
-        Below are relevant details about ${assistant.name}'s past and the conversation you are in.
-        ${relevantHistory}
+      return chunks.join("");
+    };
 
-
-        ${recentChatHistory}\n${assistant.name}:`
-        )
-        .catch(console.error)
-    );
-
-    const cleaned = resp.replaceAll(",", "");
-    const chunks = cleaned.split("\n");
-    const response = chunks[0];
-
+    const response = await toString(stream);
     await memoryManager.writeToHistory("" + response.trim(), assistantKey);
     var Readable = require("stream").Readable;
 
@@ -123,8 +125,6 @@ export async function POST(
     s.push(response);
     s.push(null);
     if (response !== undefined && response.length > 1) {
-      memoryManager.writeToHistory("" + response.trim(), assistantKey);
-
       await prismadb.assistant.update({
         where: {
           id: params.chatId,
